@@ -22,10 +22,10 @@ COPY --from=frontend /build/build /app/frontend
 RUN mkdir /data && useradd -m -u 1000 appuser && chown -R appuser:appuser /app && chown -R appuser:appuser /data
 USER appuser
 # Pre-warm matplotlib font cache so first plot request isn't slow
-RUN uv run --no-sources python -c "import matplotlib.pyplot as plt; plt.figure(); plt.close()"
+RUN /app/.venv/bin/python -c "import matplotlib.pyplot as plt; plt.figure(); plt.close()"
 ENV STATIC_DIR=/app/frontend
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+    CMD /app/.venv/bin/python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
 # Single worker required: in-memory session manager does not support multi-worker
-CMD ["uv", "run", "--no-sources", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
