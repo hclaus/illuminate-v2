@@ -1,7 +1,7 @@
 # Stage 1: Build frontend
 FROM node:22-slim AS frontend
 WORKDIR /build
-RUN corepack enable
+RUN npm install -g pnpm
 COPY ui/package.json ui/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY ui/ ./
