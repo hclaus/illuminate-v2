@@ -12,9 +12,10 @@ RUN BASE_PATH=${BASE_PATH} VITE_API_URL=${VITE_API_URL} pnpm build
 # Stage 2: Runtime
 FROM python:3.12-slim
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY api/pyproject.toml api/uv.lock ./
-RUN uv lock --no-sources && uv sync --no-sources --no-dev --no-editable
+RUN uv sync --frozen --no-dev --no-editable
 COPY VERSION .
 COPY api/ .
 COPY --from=frontend /build/build /app/frontend
