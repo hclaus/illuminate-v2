@@ -2,7 +2,7 @@
 FROM node:22-slim AS frontend
 WORKDIR /build
 RUN npm install -g pnpm
-COPY ui/package.json ui/pnpm-lock.yaml ./
+COPY ui/package.json ui/pnpm-lock.yaml ui/pnpm-workspace.yaml ui/.npmrc ./
 RUN pnpm install --frozen-lockfile
 COPY ui/ ./
 ARG BASE_PATH=
