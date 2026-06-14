@@ -18,7 +18,7 @@ RUN uv lock --no-sources && uv sync --no-sources --no-dev --no-editable
 COPY VERSION .
 COPY api/ .
 COPY --from=frontend /build/build /app/frontend
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+RUN mkdir /data && useradd -m -u 1000 appuser && chown -R appuser:appuser /app && chown -R appuser:appuser /data
 USER appuser
 # Pre-warm matplotlib font cache so first plot request isn't slow
 RUN uv run --no-sources python -c "import matplotlib.pyplot as plt; plt.figure(); plt.close()"

@@ -6,7 +6,10 @@ import sys
 # Ensure the logs directory exists
 # In PyInstaller frozen mode, __file__ may point to a read-only temp dir,
 # so write logs next to the executable instead.
-if getattr(sys, 'frozen', False):
+# If a persistent /data directory exists and is writable, use it.
+if os.path.isdir('/data') and os.access('/data', os.W_OK):
+    LOG_DIR = '/data/logs'
+elif getattr(sys, 'frozen', False):
     LOG_DIR = os.path.join(os.path.dirname(sys.executable), 'logs')
 else:
     LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
