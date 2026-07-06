@@ -14,8 +14,9 @@ case "$action" in
     # Preflight checks
     git diff --quiet && git diff --cached --quiet \
         || { echo "Error: Working tree is dirty. Commit or stash changes first."; exit 1; }
-    [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ] \
-        || { echo "Error: Must be on main branch (currently on $(git rev-parse --abbrev-ref HEAD))."; exit 1; }
+    CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "publish-to-server" ] \
+        || { echo "Error: Must be on main or publish-to-server branch (currently on $CURRENT_BRANCH)."; exit 1; }
 
     echo "=== Pulling latest code ==="
     git pull --rebase
@@ -30,7 +31,7 @@ case "$action" in
       git add VERSION
       git commit -m "Release v${NEW_VERSION}"
       git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
-      git push origin main
+      git push origin "$CURRENT_BRANCH"
       git push origin "v${NEW_VERSION}"
     fi
 

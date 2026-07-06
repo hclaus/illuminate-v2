@@ -45,5 +45,11 @@
 		"d3-contour": "^4.0.2",
 		"three": "^0.184.0",
 		"zod": "^4.4.3"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"msw"
+		]
 	}
 }
