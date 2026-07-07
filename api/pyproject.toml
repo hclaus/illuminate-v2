@@ -7,7 +7,7 @@ dependencies = [
     "uvicorn[standard]>=0.27.0,<1.0.0",
     "pydantic>=2.0.0,<3.0.0",
     "python-multipart>=0.0.6,<1.0.0",
-    "guv-calcs @ git+https://github.com/hclaus/guv-calcHC.git@85e2957",
+    "guv-calcs>=0.8.0",
     "matplotlib>=3.8.4,<4.0.0",
     "numpy>=1.26.4,<3.0.0",
     "pandas>=2.2.2,<4.0.0",
@@ -23,4 +23,4 @@ dev = [
 package = false
 
 [tool.uv.sources]
-guv-calcs = { path = "../../../guv-calcHC", editable = true }
+guv-calcs = { git = "https://github.com/hclaus/guv-calcHC.git", branch = "main" }
