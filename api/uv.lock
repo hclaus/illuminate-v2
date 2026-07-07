@@ -251,7 +251,8 @@ wheels = [
 
 [[package]]
 name = "guv-calcs"
-source = { editable = "../../../guv-calcHC" }
+version = "0.8.0"
+source = { git = "https://github.com/hclaus/guv-calcHC.git?branch=main#85e29570a478e084b82d2e1c7464658abc0e5cdd" }
 dependencies = [
     { name = "kaleido" },
     { name = "matplotlib" },
@@ -264,29 +265,6 @@ dependencies = [
     { name = "seaborn" },
     { name = "xlrd" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "kaleido", specifier = ">=1.0.0" },
-    { name = "matplotlib", specifier = ">=3.8.4" },
-    { name = "numpy", specifier = ">=1.26.4" },
-    { name = "openpyxl", specifier = ">=3.1.0" },
-    { name = "pandas", specifier = ">=2.2.2" },
-    { name = "photompy", specifier = "==0.3.0" },
-    { name = "plotly", specifier = ">=6.1.1" },
-    { name = "scipy", specifier = ">=1.13.1" },
-    { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "xlrd", specifier = ">=2.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "black", specifier = ">=23.0" },
-    { name = "flake8", specifier = ">=6.0" },
-    { name = "pytest", specifier = ">=7.0" },
-    { name = "pytest-cov", specifier = ">=4.0" },
-]
-local = [{ name = "jupyter" }]
 
 [[package]]
 name = "h11"
@@ -394,7 +372,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.109.0,<1.0.0" },
-    { name = "guv-calcs", editable = "../../../guv-calcHC" },
+    { name = "guv-calcs", git = "https://github.com/hclaus/guv-calcHC.git?branch=main" },
     { name = "matplotlib", specifier = ">=3.8.4,<4.0.0" },
     { name = "numpy", specifier = ">=1.26.4,<3.0.0" },
     { name = "pandas", specifier = ">=2.2.2,<4.0.0" },
