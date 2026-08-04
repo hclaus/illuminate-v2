@@ -6,6 +6,7 @@
 	import { theme } from '$lib/stores/theme';
 	import { userSettings } from '$lib/stores/settings';
 	import type { RoomConfig } from '$lib/types/project';
+	import { getTileDimsMeters, generateTileGrid, clipTileToRoom } from '$lib/utils/ceilingLayout';
 
 	interface Props {
 		dims: { x: number; y: number; z: number };
@@ -153,6 +154,36 @@
 	const xTicks = $derived(generateTicks(room.x ?? dims.x));
 	const yTicks = $derived(generateTicks(room.y ?? dims.y).filter(t => t > 0));
 	const zTicks = $derived(generateTicks(room.z).filter(t => t > 0));
+
+	import { project } from '$lib/stores/project';
+
+	const layout = $derived($project.ceilingLayout);
+
+	// Tile dimension in room units
+	const tileDims = $derived.by(() => {
+		if (!layout) return { w: 0, h: 0 };
+		return getTileDimsMeters(layout, units);
+	});
+
+	// Full bounding-box tile grid (unclipped)
+	const rawTiles = $derived.by(() => {
+		if (!layout || layout.tileSize === 'none' || !room) return [];
+		const pts = room.polygon || [[0, 0], [room.x, 0], [room.x, room.y], [0, room.y]];
+		return generateTileGrid(layout, tileDims, pts, room.x, room.y);
+	});
+
+	// Tiles clipped to the (possibly concave) room polygon, each carrying only
+	// the boundary-edge sub-segments that actually lie inside the room, so a
+	// tile straddling a notch renders a properly trimmed grid line instead of
+	// being dropped or drawn in full based on its center point alone.
+	const tiles = $derived.by(() => {
+		return rawTiles
+			.map(tile => {
+				const clipped = clipTileToRoom(tile, room.polygon);
+				return clipped ? { ...tile, edges: clipped.edges } : null;
+			})
+			.filter((t): t is NonNullable<typeof t> => t !== null);
+	});
 </script>
 
 {#if isPolygon}
@@ -339,4 +370,99 @@
 	{/each}
 
 </T.Group>
+{/if}
+
+{#if room.showCeilingLayout ?? true}
+	<!-- Ceiling grid and custom components in 3D -->
+	<!-- Tiles Grid (rendered as thick black meshes to avoid WebGL 1px line limitations) -->
+	{@const lineThickness = units === 'meters' ? 0.02 : 0.06}
+	{@const lineDepth = units === 'meters' ? 0.01 : 0.03}
+	{#each tiles as tile}
+		<!-- Bottom edge (room y = tile.y), trimmed to the segment(s) actually inside the room polygon -->
+		{#each tile.edges.bottom as seg}
+			<T.Mesh position={[(seg[0] + seg[1]) / 2, dims.z - lineDepth / 2, -tile.y]}>
+				<T.BoxGeometry args={[seg[1] - seg[0], lineDepth, lineThickness]} />
+				<T.MeshBasicMaterial color="#000000" />
+			</T.Mesh>
+		{/each}
+		<!-- Top edge (room y = tile.y + tile.h) -->
+		{#each tile.edges.top as seg}
+			<T.Mesh position={[(seg[0] + seg[1]) / 2, dims.z - lineDepth / 2, -(tile.y + tile.h)]}>
+				<T.BoxGeometry args={[seg[1] - seg[0], lineDepth, lineThickness]} />
+				<T.MeshBasicMaterial color="#000000" />
+			</T.Mesh>
+		{/each}
+		<!-- Left edge (room x = tile.x) -->
+		{#each tile.edges.left as seg}
+			<T.Mesh position={[tile.x, dims.z - lineDepth / 2, -(seg[0] + seg[1]) / 2]}>
+				<T.BoxGeometry args={[lineThickness, lineDepth, seg[1] - seg[0]]} />
+				<T.MeshBasicMaterial color="#000000" />
+			</T.Mesh>
+		{/each}
+		<!-- Right edge (room x = tile.x + tile.w) -->
+		{#each tile.edges.right as seg}
+			<T.Mesh position={[tile.x + tile.w, dims.z - lineDepth / 2, -(seg[0] + seg[1]) / 2]}>
+				<T.BoxGeometry args={[lineThickness, lineDepth, seg[1] - seg[0]]} />
+				<T.MeshBasicMaterial color="#000000" />
+			</T.Mesh>
+		{/each}
+	{/each}
+
+	<!-- Custom Placed Components -->
+	{#if layout}
+		{#each layout.components as comp}
+			{#if comp.type === 'smoke_detector'}
+				<T.Mesh position={[comp.x, dims.z - 0.01, -comp.y]}>
+					<T.CylinderGeometry args={[0.15, 0.15, 0.02, 16]} />
+					<T.MeshBasicMaterial color="#ef4444" />
+				</T.Mesh>
+			{:else if comp.type === 'ventilation'}
+				<T.Mesh position={[comp.x, dims.z - 0.005, -comp.y]}>
+					<T.BoxGeometry args={[0.28, 0.01, 0.28]} />
+					<T.MeshBasicMaterial color="#cbd5e1" />
+				</T.Mesh>
+			{:else if comp.type === 'sensor'}
+				<T.Mesh position={[comp.x, dims.z - 0.04, -comp.y]} rotation.x={Math.PI}>
+					<T.ConeGeometry args={[0.06, 0.08, 8]} />
+					<T.MeshBasicMaterial color="#10b981" />
+				</T.Mesh>
+			{:else if comp.type === 'light_fixture'}
+				<T.Mesh position={[comp.x + (comp.w || 0.6) / 2, dims.z - 0.002, -(comp.y + (comp.h || 0.6) / 2)]}>
+					<T.BoxGeometry args={[comp.w || 0.6, 0.004, comp.h || 0.6]} />
+					<T.MeshBasicMaterial color="#fef08a" transparent opacity={0.7} />
+				</T.Mesh>
+			{:else if comp.type === 'pillar'}
+				<!-- Vertical Column -->
+				<T.Mesh position={[comp.x + (comp.w || 0.3) / 2, dims.z / 2, -(comp.y + (comp.h || 0.3) / 2)]}>
+					<T.BoxGeometry args={[comp.w || 0.3, dims.z, comp.h || 0.3]} />
+					<T.MeshStandardMaterial color="#94a3b8" transparent opacity={0.8} roughness={0.7} />
+				</T.Mesh>
+			{/if}
+		{/each}
+
+		<!-- Keep-Out Areas -->
+		{#each layout.keepOutAreas as ko}
+			<!-- Filled translucent plane -->
+			<T.Mesh position={[ko.x + ko.w / 2, dims.z - 0.002, -(ko.y + ko.h / 2)]}>
+				<T.BoxGeometry args={[ko.w, 0.002, ko.h]} />
+				<T.MeshBasicMaterial color="#ef4444" transparent opacity={0.1} />
+			</T.Mesh>
+			<!-- Outline -->
+			<T.Line position={[ko.x, dims.z - 0.001, -ko.y]}>
+				<T.BufferGeometry>
+					<T.BufferAttribute
+						attach="attributes-position"
+						args={[new Float32Array([
+							0, 0, 0,
+							ko.w, 0, 0,
+							ko.w, 0, -ko.h,
+							0, 0, -ko.h,
+							0, 0, 0
+						]), 3]}
+					/>
+				</T.BufferGeometry>
+				<T.LineBasicMaterial color="#ef4444" linewidth={1.5} />
+			</T.Line>
+		{/each}
+	{/if}
 {/if}
