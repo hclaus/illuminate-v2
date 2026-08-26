@@ -252,7 +252,7 @@ wheels = [
 [[package]]
 name = "guv-calcs"
 version = "0.8.0"
-source = { git = "https://github.com/hclaus/guv-calcHC.git?branch=main#85e29570a478e084b82d2e1c7464658abc0e5cdd" }
+source = { git = "https://github.com/hclaus/guv-calcHC.git?branch=main#5889a32dd97a321fbe9e0f5a834c5249e935dc75" }
 dependencies = [
     { name = "kaleido" },
     { name = "matplotlib" },
